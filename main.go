@@ -59,6 +59,7 @@ import (
 
 	// +kubebuilder:scaffold:imports
 
+	"github.com/fluxcd/source-controller/internal/artifactmirror"
 	"github.com/fluxcd/source-controller/internal/cache"
 	"github.com/fluxcd/source-controller/internal/controller"
 	"github.com/fluxcd/source-controller/internal/features"
@@ -99,6 +100,8 @@ func main() {
 		metricsAddr            string
 		eventsAddr             string
 		healthAddr             string
+		artifactMirrorConfig   string
+		artifactMirrorConcurrent int
 		concurrent             int
 		requeueDependency      time.Duration
 		helmIndexLimit         int64
@@ -124,6 +127,10 @@ func main() {
 	flag.StringVar(&eventsAddr, "events-addr", envOrDefault("EVENTS_ADDR", ""),
 		"The address of the events receiver.")
 	flag.StringVar(&healthAddr, "health-addr", ":9440", "The address the health endpoint binds to.")
+	flag.StringVar(&artifactMirrorConfig, "artifact-mirror-config", envOrDefault("ARTIFACT_MIRROR_CONFIG", ""),
+		"Path to the S3 artifact mirror configuration file.")
+	flag.IntVar(&artifactMirrorConcurrent, "artifact-mirror-concurrent", 1,
+		"The number of concurrent reconciles for the artifact mirror.")
 	flag.IntVar(&concurrent, "concurrent", 2, "The number of concurrent reconciles per controller.")
 	flag.Int64Var(&helmIndexLimit, "helm-index-max-size", helm.MaxIndexSize,
 		"The max allowed size in bytes of a Helm repository index file.")
@@ -306,6 +313,31 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", sourcev1.OCIRepositoryKind)
 		os.Exit(1)
 	}
+	if artifactMirrorConfig != "" {
+		cfg, err := artifactmirror.LoadConfig(artifactMirrorConfig)
+		if err != nil {
+			setupLog.Error(err, "unable to load artifact mirror config")
+			os.Exit(1)
+		}
+		if cfg.Enabled {
+			mirrorClient, err := artifactmirror.NewClient(cfg)
+			if err != nil {
+				setupLog.Error(err, "unable to create artifact mirror client")
+				os.Exit(1)
+			}
+			if err = (&controller.ArtifactMirrorReconciler{
+				Client:        mgr.GetClient(),
+				Storage:       storage,
+				Config:        cfg,
+				MirrorClient:  mirrorClient,
+				EventRecorder: eventRecorder,
+			}).SetupWithManager(mgr, artifactMirrorConcurrent, helper.GetRateLimiter(rateLimiterOptions)); err != nil {
+				setupLog.Error(err, "unable to create controller", "controller", "ArtifactMirror")
+				os.Exit(1)
+			}
+		}
+	}
+
 	// +kubebuilder:scaffold:builder
 
 	go func() {
