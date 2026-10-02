@@ -97,29 +97,29 @@ func main() {
 	)
 
 	var (
-		metricsAddr            string
-		eventsAddr             string
-		healthAddr             string
-		artifactMirrorConfig   string
+		metricsAddr              string
+		eventsAddr               string
+		healthAddr               string
+		artifactMirrorConfig     string
 		artifactMirrorConcurrent int
-		concurrent             int
-		requeueDependency      time.Duration
-		helmIndexLimit         int64
-		helmChartLimit         int64
-		helmChartFileLimit     int64
-		artifactOptions        artcfg.Options
-		clientOptions          client.Options
-		logOptions             logger.Options
-		leaderElectionOptions  leaderelection.Options
-		rateLimiterOptions     helper.RateLimiterOptions
-		featureGates           feathelper.FeatureGates
-		watchOptions           helper.WatchOptions
-		intervalJitterOptions  jitter.IntervalOptions
-		helmCacheMaxSize       int
-		helmCacheTTL           string
-		helmCachePurgeInterval string
-		tokenCacheOptions      pkgcache.TokenFlags
-		defaultServiceAccount  string
+		concurrent               int
+		requeueDependency        time.Duration
+		helmIndexLimit           int64
+		helmChartLimit           int64
+		helmChartFileLimit       int64
+		artifactOptions          artcfg.Options
+		clientOptions            client.Options
+		logOptions               logger.Options
+		leaderElectionOptions    leaderelection.Options
+		rateLimiterOptions       helper.RateLimiterOptions
+		featureGates             feathelper.FeatureGates
+		watchOptions             helper.WatchOptions
+		intervalJitterOptions    jitter.IntervalOptions
+		helmCacheMaxSize         int
+		helmCacheTTL             string
+		helmCachePurgeInterval   string
+		tokenCacheOptions        pkgcache.TokenFlags
+		defaultServiceAccount    string
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-addr", envOrDefault("METRICS_ADDR", ":8080"),

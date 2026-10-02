@@ -19,7 +19,6 @@ package controller
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
